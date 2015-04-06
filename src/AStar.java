@@ -267,7 +267,7 @@ public class AStar<T> {
             //System.out.println(stationList.get(i).getStations() + "-" + stationList.get(i).getLat() + "-" + stationList.get(i).getLng());
             Map<String, Double> map = new HashMap<String, Double>(); //map ของข้อมูล คุ่อันดับ สถานีและระยะขจัด
             for (int j = 0; j<stationList.size();j++){
-                map.put(stationList.get(j).getStations(), stationList.get(j).getLat());//ทดลองเรื่อง heuristic
+                map.put(stationList.get(j).getStations(), Double.valueOf(j));//ทดลองเรื่อง heuristic ของจริงจะแทนด้วยการคำนวณค่าระยะ
                 //System.out.println(" "+i+" "+j);
             }
             list.add(map);
@@ -275,11 +275,12 @@ public class AStar<T> {
         //System.out.println(list); เช็คว่ามีอะไรอยู่ในลิส
 
         Map[] maps = list.toArray(new HashMap[list.size()]);//ทดลองเรื่อง heuristic
+        //System.out.print(maps[0].entrySet()); ทดสอบว่า index 0 มีอะไรบ้าง
         for (int i = 0; i<list.size();i++){
             //System.out.println(maps[0]);
             hueristic.put(String.valueOf(stationList.get(i).getStations()),maps[i]);//ถูกแล้ว hueristic.put("A", mapA);
         }
-        System.out.println(hueristic);//ดูว่าอะไรอยู่ใน ฮิวริสติกบ้าง
+        //System.out.println(hueristic);//ดูว่าอะไรอยู่ใน ฮิวริสติกบ้าง
 
         connection.close();
 
