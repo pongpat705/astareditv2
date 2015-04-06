@@ -1,6 +1,7 @@
 
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Matcher;
 
 final class NodeData<T> {
 
@@ -146,7 +147,7 @@ final class GraphAStar<T> implements Iterable<T> {
 }
 
 public class AStar<T> {
-
+    private double distance;
     private final GraphAStar<T> graph;
 
 
@@ -171,6 +172,7 @@ public class AStar<T> {
      * @return              the path from source to destination
      */
     public List<T> astar(T source, T destination) {
+        double Distance;
         /**
          * http://stackoverflow.com/questions/20344041/why-does-priority-queue-has-default-initial-capacity-of-11
          */
@@ -203,6 +205,7 @@ public class AStar<T> {
 
                 if (tentativeG < neighbor.getG()) {
                     neighbor.setG(tentativeG);
+                    distance = tentativeG;
                     neighbor.calcF(destination);
 
                     path.put(neighbor.getNodeId(), nodeData.getNodeId());
@@ -262,27 +265,47 @@ public class AStar<T> {
         }
 
 
-        List<Map<String, Double>> list = new ArrayList<Map<String, Double>>();// ��ʢͧ map
+        List<Map<String, Double>> list = new ArrayList<Map<String, Double>>();// ลิสของ map
         for (int i = 0; i<stationList.size();i++){
             //System.out.println(stationList.get(i).getStations() + "-" + stationList.get(i).getLat() + "-" + stationList.get(i).getLng());
-            Map<String, Double> map = new HashMap<String, Double>(); //map �ͧ������ ����ѹ�Ѻ ʶҹ�������Т�Ѵ
+            Map<String, Double> map = new HashMap<String, Double>(); //map ของข้อมูล คุ่อันดับ สถานีและระยะขจัด
             for (int j = 0; j<stationList.size();j++){
-                map.put(stationList.get(j).getStations(), Double.valueOf(j));//���ͧ����ͧ heuristic �ͧ��ԧ��᷹���¡�äӹǳ�������
+                double sLat,sLng,dLat,dLng,ans;
+                sLat = stationList.get(i).getLat();
+                sLng = stationList.get(i).getLat();
+                dLat = stationList.get(j).getLat();
+                dLng = stationList.get(j).getLat();
+                ans = getDistance(sLat,sLng,dLat,dLng);//ส่งไปคำนวณหาระยะทาง
+                map.put(stationList.get(j).getStations(), ans);//ทดลองเรื่อง heuristic ของจริงจะแทนด้วยการคำนวณค่าระยะ
                 //System.out.println(" "+i+" "+j);
             }
             list.add(map);
         }
-        //System.out.println(list); �������������������
+        //System.out.println(list); เช็คว่ามีอะไรอยู่ในลิส
 
-        Map[] maps = list.toArray(new HashMap[list.size()]);//���ͧ����ͧ heuristic
-        //System.out.print(maps[0].entrySet()); ���ͺ��� index 0 �����ú�ҧ
+        Map[] maps = list.toArray(new HashMap[list.size()]);//ทดลองเรื่อง heuristic
+        //System.out.print(maps[0].entrySet()); //ทดสอบว่า index 0 มีอะไรบ้าง
         for (int i = 0; i<list.size();i++){
             //System.out.println(maps[0]);
-            hueristic.put(String.valueOf(stationList.get(i).getStations()),maps[i]);//�١���� hueristic.put("A", mapA);
+            hueristic.put(String.valueOf(stationList.get(i).getStations()),maps[i]);//ถูกแล้ว hueristic.put("A", mapA);
         }
-        //System.out.println(hueristic);//�������������� �����ʵԡ��ҧ
+        //System.out.println(hueristic);//ดูว่าอะไรอยู่ใน ฮิวริสติกบ้าง
+        GraphAStar<String> graph = new GraphAStar<String>(hueristic);
+        for (int i = 0; i < stationList.size();i++){
+            graph.addNode(String.valueOf(stationList.get(i).getStations()));//เอาชื่อสถานีไปเป็น node
+        }
 
+        Statement path_statement = connection.createStatement() ;
+        ResultSet paths = path_statement.executeQuery(pathQuery);
+        int path_station_A = paths.findColumn("station_a");
+        int path_station_B = paths.findColumn("station_b");
+        int path_station_distance = paths.findColumn("distance");
+        while (paths.next()){
+            //add edge here
+            graph.addEdge(paths.getString(path_station_A),paths.getString(path_station_B),paths.getDouble(path_station_distance));
+        }
         connection.close();
+
 
 //        // map for A
 //        Map<String, Double> mapA = new HashMap<String, Double>();
@@ -351,46 +374,24 @@ public class AStar<T> {
 //
 //
 //
-//        AStar<String> aStar = new AStar<String>(graph);
-//
-//        for (String path : aStar.astar("A", "F")) {
-//            System.out.println(path);
-//        }
+        String a = "ARL สุวรรณภูมิ";
+        String b = "BRT วัดดอกไม้";
+        AStar<String> aStar = new AStar<String>(graph);
+
+        for (String path : aStar.astar(a, b)) {
+            System.out.println(path);
+        }
+        System.out.println("\n Distance "+a+" to "+b+"  = "+Math.round(aStar.distance));
     }
-    public void ConnectDatabase() throws SQLException {
-        /**
-         * Connecting To Database*/
-        String host = "jdbc:mysql://gameparty.zapto.org:3306/";
-        String user = "pongpat";
-        String pass = "12031991";
-        Connection connection = DriverManager.getConnection(host, user, pass);
-        Statement statement = connection.createStatement() ;
-        String pathQuery = "SELECT * FROM newschema.paths";
-        String stationsQuery = "SELECT * FROM newschema.stations";
-        ResultSet stations = statement.executeQuery(stationsQuery);
 
-        int station_type = stations.findColumn("station_type");
-        int station_name = stations.findColumn("station_name");
-        String station_name_str;
-        String station_type_str;
-        List name = new ArrayList();
-        while (stations.next()) {
-            station_name_str = stations.getString(station_name);
-            station_type_str = stations.getString(station_type);
-            name.add(station_name_str);//Bring to graph.addNode
+    private static Double getDistance(double sLat,double sLng,double dLat, double dLng){
+        double AVG_R_EARTH = 6371;
 
-            //heuristic,put here
-        }
+        double latDistance = Math.toRadians(sLat-dLat);
+        double lngDistance = Math.toRadians(sLng-dLng);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance /2) + Math.cos(Math.toRadians(sLat))*Math.cos(Math.toRadians(dLat))* Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 
-        Statement path_statement = connection.createStatement() ;
-        ResultSet paths = path_statement.executeQuery(pathQuery);
-        int path_station_A = paths.findColumn("station_a");
-        int path_station_B = paths.findColumn("station_b");
-        int path_station_distance = paths.findColumn("distance");
-        while (paths.next()){
-            //add edge here
-        }
-        connection.close();
-
+        return (double)Math.round(AVG_R_EARTH * c);
     }
 }
