@@ -276,7 +276,7 @@ public class AStar<T> {
                 dLat = stationList.get(j).getLat();
                 dLng = stationList.get(j).getLat();
                 ans = getDistance(sLat,sLng,dLat,dLng);//ส่งไปคำนวณหาระยะทาง
-                map.put(stationList.get(j).getStations(), ans);//ทดลองเรื่อง heuristic ของจริงจะแทนด้วยการคำนวณค่าระยะ
+                map.put(stationList.get(j).getStations(), ans);//กำหนด Heuristic ให้กับสถานี
                 //System.out.println(" "+i+" "+j);
             }
             list.add(map);
@@ -302,7 +302,7 @@ public class AStar<T> {
         int path_station_distance = paths.findColumn("distance");
         while (paths.next()){
             //add edge here
-            graph.addEdge(paths.getString(path_station_A),paths.getString(path_station_B),paths.getDouble(path_station_distance));
+            graph.addEdge(paths.getString(path_station_A),paths.getString(path_station_B),paths.getDouble(path_station_distance));//เพิ่มเส้นเชื่อมระหว่างสถานี
         }
         connection.close();
 
